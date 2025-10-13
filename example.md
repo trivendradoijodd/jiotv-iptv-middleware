@@ -2,11 +2,9 @@
 
 This guide provides a practical example of how to run and use the middleware server.
 
-Let's assume your IPTV player is configured to connect to your provider's portal. The original URL in your player's settings would look something like this:
+Let's assume your IPTV provider's portal URL is `http://subdomain.myiptvdomain.com`. You would set this value in your `.env` file.
 
-`http://subdomain.myiptvdomain.com/stalker_portal/c/`
-
-To use the middleware, you would first start the server and then change the URL in your IPTV player.
+To use the middleware, you first start the server and then configure your IPTV player to point to it.
 
 ### Step 1: Run the Middleware Server
 
@@ -24,37 +22,29 @@ To use the middleware, you would first start the server and then change the URL 
 ### Step 2: Configure Your IPTV Client
 
 1.  **Go to your IPTV player's settings** where you configure the portal URL.
-2.  **Change the domain part** of the URL from your provider's domain to your local server's address.
+2.  **Set the URL** to point to your local middleware server. For example, if your provider's portal path is `/stalker_portal/c/`, you would set the URL in your client to:
 
-    *   **Original URL:** `http://subdomain.myiptvdomain.com/stalker_portal/c/`
-    *   **New URL:** `http://127.0.0.1:5000/stalker_portal/c/`
+    `http://127.0.0.1:5000/stalker_portal/c/`
 
-    *(Note: If your IPTV player is on a different device on the same network, you would use your computer's local network IP address instead of `127.0.0.1`, for example: `http://192.168.0.103:5000/stalker_portal/c/`)*
+    *(Note: If your IPTV player is on a different device on the same network, use your computer's local network IP, e.g., `http://192.168.0.103:5000/stalker_portal/c/`)*
 
 ### How It Works: A `curl` Example
 
-We can simulate what your IPTV player does using the command-line tool `curl`.
+We can simulate what your IPTV player does using `curl`.
 
-Imagine your player makes a request to get the channel list. Without the middleware, the request would be:
-
-```bash
-curl -H "Host: subdomain.myiptvdomain.com" "http://subdomain.myiptvdomain.com/stalker_portal/server/load.php?type=itv&action=get_all_channels"
-```
-
-When you use the middleware, your player sends the *exact same request*, but to your local server instead:
+When your player needs the channel list, it makes a request to your local server:
 
 ```bash
-curl -H "Host: subdomain.myiptvdomain.com" "http://127.0.0.1:5000/stalker_portal/server/load.php?type=itv&action=get_all_channels"
+curl "http://127.0.0.1:5000/stalker_portal/server/load.php?type=itv&action=get_all_channels"
 ```
 
 **What the middleware does:**
 
 1.  It receives this request.
-2.  It sees the `Host` header is `subdomain.myiptvdomain.com`, so it knows where to forward the request.
-3.  It sends the request to the real IPTV provider.
-4.  It gets the JSON response from the provider.
-5.  It scans the response. If it finds a channel with a `localhost` URL, it fetches the real URL, caches it, and replaces it in the JSON.
-6.  It also replaces all mentions of `subdomain.myiptvdomain.com` in the response with `127.0.0.1:5000`.
-7.  Finally, it sends this clean, modified response back to your player.
+2.  It forwards the request to the `IPTV_PROVIDER_DOMAIN` defined in your `.env` file.
+3.  It gets the JSON response from the provider.
+4.  It scans the response. If it finds a channel with a temporary link (containing the provider's domain), it fetches the real URL, caches it, and replaces it in the JSON.
+5.  It replaces all mentions of the provider's domain in the response with its own address (`http://127.0.0.1:5000`).
+6.  Finally, it sends this clean, modified response back to your player.
 
-Your IPTV player only ever communicates with `127.0.0.1:5000` and never sees the real provider's domain or the temporary `localhost` links.
+Your IPTV player only ever communicates with `127.0.0.1:5000` and never sees the real provider's domain.

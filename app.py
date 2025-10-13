@@ -9,10 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Configuration ---
-# The base domain of your IPTV provider, loaded from the .env file
-IPTV_BASE_DOMAIN = os.getenv("IPTV_BASE_DOMAIN", "myiptvdomain.com")
-# The string to look for in the 'cmd' or 'url' field to trigger a replacement.
-LOCALHOST_REPLACEMENT_TARGET = "http://localhost"
+# The full domain of your IPTV provider, loaded from the .env file
+IPTV_PROVIDER_DOMAIN = os.getenv("IPTV_PROVIDER_DOMAIN", "http://subdomain.myiptvdomain.com")
 # Cache settings
 CACHE_FILE = "iptv_cache.db"
 CACHE_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
@@ -24,16 +22,8 @@ def proxy(path):
     """
     Catches all requests and forwards them to the IPTV provider.
     """
-    host = request.headers.get('Host')
-    if not host or not host.endswith(IPTV_BASE_DOMAIN):
-        return "Invalid host header. This proxy is only for the specified IPTV provider.", 403
-
-    # Determine the scheme (http or https)
-    scheme = 'http' # Default to http, adjust if your provider uses https
-    
-    # Construct the full target URL dynamically
-    target_domain = f"{scheme}://{host}"
-    target_url = f"{target_domain}/{path}"
+    # Construct the full target URL using the static domain from config
+    target_url = f"{IPTV_PROVIDER_DOMAIN}/{path}"
 
     # Forward the request to the target URL
     try:
@@ -51,7 +41,7 @@ def proxy(path):
 
     # --- Response Modification Logic ---
     content_type = resp.headers.get('Content-Type', '')
-    middleware_host = request.headers.get('Host')
+    middleware_host = request.host_url.strip('/')
     final_content = resp.content
     final_headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in ['content-encoding', 'transfer-encoding']]
 
@@ -67,9 +57,13 @@ def proxy(path):
             for channel in channels:
                 if 'cmds' in channel and isinstance(channel['cmds'], list):
                     for cmd_item in channel['cmds']:
-                        if cmd_item.get('use_http_tmp_link') == '1' and LOCALHOST_REPLACEMENT_TARGET in cmd_item.get('url', ''):
+                        # New Trigger: Look for the provider's domain in the URL
+                        if cmd_item.get('use_http_tmp_link') == '1' and IPTV_PROVIDER_DOMAIN in cmd_item.get('url', ''):
                             original_cmd = cmd_item.get('url')
-                            channel_id = original_cmd.split('/')[-1]
+                            # The ID is now part of the full URL, let's use the whole cmd as a key for simplicity
+                            # or extract a more stable ID if the URL format is consistent.
+                            # For now, using the command itself ensures uniqueness.
+                            channel_id = original_cmd 
                             new_url = None
 
                             with shelve.open(CACHE_FILE) as cache:
@@ -79,7 +73,7 @@ def proxy(path):
                                 else:
                                     # Cache miss or expired, fetch new URL
                                     params = {'type': 'itv', 'action': 'create_link', 'cmd': original_cmd, 'JsHttpRequest': '1-xml'}
-                                    create_link_url = f"{target_domain}/stalker_portal/server/load.php?{urlencode(params)}"
+                                    create_link_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(params)}"
                                     try:
                                         link_resp = requests.get(create_link_url, headers=request.headers)
                                         fetched_url = link_resp.json().get('js', {}).get('cmd')
@@ -98,7 +92,7 @@ def proxy(path):
             # Anonymize the provider by replacing its domain with our middleware's host
             import json
             content_str = json.dumps(data)
-            content_str = content_str.replace(target_domain, f"http://{middleware_host}")
+            content_str = content_str.replace(IPTV_PROVIDER_DOMAIN, middleware_host)
             final_content = content_str.encode('utf-8')
 
         except ValueError:
@@ -109,7 +103,7 @@ def proxy(path):
     elif 'text/' in content_type:
         try:
             content_str = resp.content.decode('utf-8')
-            content_str = content_str.replace(target_domain, f"http://{middleware_host}")
+            content_str = content_str.replace(IPTV_PROVIDER_DOMAIN, middleware_host)
             final_content = content_str.encode('utf-8')
         except UnicodeDecodeError:
             # If it's not decodable (e.g., binary data), leave content as is
