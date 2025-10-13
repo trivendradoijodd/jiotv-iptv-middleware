@@ -1,5 +1,7 @@
 import requests
 import os
+import shelve
+import time
 from flask import Flask, request, Response
 from urllib.parse import urlencode
 from dotenv import load_dotenv
@@ -11,6 +13,9 @@ load_dotenv()
 IPTV_BASE_DOMAIN = os.getenv("IPTV_BASE_DOMAIN", "myiptvdomain.com")
 # The string to look for in the 'cmd' or 'url' field to trigger a replacement.
 LOCALHOST_REPLACEMENT_TARGET = "http://localhost"
+# Cache settings
+CACHE_FILE = "iptv_cache.db"
+CACHE_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
 
 app = Flask(__name__)
 
@@ -64,18 +69,31 @@ def proxy(path):
                     for cmd_item in channel['cmds']:
                         if cmd_item.get('use_http_tmp_link') == '1' and LOCALHOST_REPLACEMENT_TARGET in cmd_item.get('url', ''):
                             original_cmd = cmd_item.get('url')
-                            params = {'type': 'itv', 'action': 'create_link', 'cmd': original_cmd, 'JsHttpRequest': '1-xml'}
-                            create_link_url = f"{target_domain}/stalker_portal/server/load.php?{urlencode(params)}"
-                            try:
-                                link_resp = requests.get(create_link_url, headers=request.headers)
-                                new_url = link_resp.json().get('js', {}).get('cmd')
-                                if new_url:
-                                    cmd_item['url'] = new_url
-                                    cmd_item['use_http_tmp_link'] = '0'
-                                    if channel.get('cmd') == original_cmd:
-                                        channel['cmd'] = new_url
-                            except (requests.exceptions.RequestException, ValueError) as e:
-                                print(f"Could not fetch temporary link for {original_cmd}: {e}")
+                            channel_id = original_cmd.split('/')[-1]
+                            new_url = None
+
+                            with shelve.open(CACHE_FILE) as cache:
+                                cache_entry = cache.get(channel_id)
+                                if cache_entry and (time.time() - cache_entry.get('timestamp', 0) < CACHE_EXPIRATION):
+                                    new_url = cache_entry['url']
+                                else:
+                                    # Cache miss or expired, fetch new URL
+                                    params = {'type': 'itv', 'action': 'create_link', 'cmd': original_cmd, 'JsHttpRequest': '1-xml'}
+                                    create_link_url = f"{target_domain}/stalker_portal/server/load.php?{urlencode(params)}"
+                                    try:
+                                        link_resp = requests.get(create_link_url, headers=request.headers)
+                                        fetched_url = link_resp.json().get('js', {}).get('cmd')
+                                        if fetched_url:
+                                            new_url = fetched_url
+                                            cache[channel_id] = {'url': new_url, 'timestamp': time.time()}
+                                    except (requests.exceptions.RequestException, ValueError) as e:
+                                        print(f"Could not fetch temporary link for {original_cmd}: {e}")
+                            
+                            if new_url:
+                                cmd_item['url'] = new_url
+                                cmd_item['use_http_tmp_link'] = '0'
+                                if channel.get('cmd') == original_cmd:
+                                    channel['cmd'] = new_url
             
             # Anonymize the provider by replacing its domain with our middleware's host
             import json

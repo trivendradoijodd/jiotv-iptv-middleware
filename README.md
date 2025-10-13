@@ -23,3 +23,12 @@ This middleware automates the process of resolving these temporary links.
     *   Replacing the `localhost` URL with the new, real stream URL.
     *   Changing the `use_http_tmp_link` flag to `"0"`.
 7.  **Final Response:** The modified JSON is sent back to the IPTV client, which can now play the stream without any issues.
+
+## Caching
+
+To improve performance and reduce redundant requests, the middleware implements a persistent caching mechanism.
+
+-   **How it works:** When a temporary link is successfully resolved, the new stream URL is stored in a local cache file (`iptv_cache.db`).
+-   **Cache Key:** The unique channel ID is used as the key for the cache.
+-   **Expiration:** Cached entries are set to expire after 24 hours. The middleware will automatically fetch a new link if a cached entry is expired.
+-   **Benefit:** This ensures that for any given channel, the middleware only needs to perform the link resolution process once per day, making subsequent requests much faster.
