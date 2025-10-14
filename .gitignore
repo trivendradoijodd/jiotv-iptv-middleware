@@ -12,3 +12,5 @@ __pycache__/
 iptv_cache.db*
 cache.db*
 *.db
+
+nodeified/node_modules

@@ -2,11 +2,22 @@ import requests
 import os
 import shelve
 import time
+import logging
 from flask import Flask, request, Response
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# --- Logging Setup ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("iptv_proxy.log"),
+        logging.StreamHandler()
+    ]
+)
 
 # --- Configuration ---
 # The full domain of your IPTV provider, loaded from the .env file
@@ -23,6 +34,11 @@ def proxy(path):
     """
     Catches all requests and forwards them to the IPTV provider.
     """
+    logging.info(f"--- New Request ---")
+    logging.info(f"Incoming Request: {request.method} {request.url}")
+    logging.info(f"Headers: {dict(request.headers)}")
+    logging.info(f"Body: {request.get_data(as_text=True)}")
+
     # --- Request Modification Logic ---
     middleware_host = request.host_url.strip('/')
     
@@ -39,6 +55,7 @@ def proxy(path):
     # Construct the full target URL using the static domain from config
     target_url = f"{IPTV_PROVIDER_DOMAIN}/{path}"
 
+    logging.info(f"Forwarding Request to: {target_url}")
     # Forward the modified request to the target URL
     try:
         resp = requests.request(
@@ -50,7 +67,10 @@ def proxy(path):
             allow_redirects=False,
             params=request.args # Use original, unmodified params
         )
+        logging.info(f"Provider Response Status: {resp.status_code}")
+        logging.info(f"Provider Response Headers: {dict(resp.headers)}")
     except requests.exceptions.RequestException as e:
+        logging.error(f"Error connecting to IPTV provider: {e}")
         return f"Error connecting to IPTV provider: {e}", 502
 
     # --- Response Modification Logic ---
@@ -77,16 +97,33 @@ def proxy(path):
                         if is_temp_link:
                             # --- Two-Step Resolution for 'localhost' ---
                             if 'localhost' in url_to_check:
-                                try:
-                                    # First hop: ask the provider to resolve localhost
-                                    first_hop_params = {'type': 'itv', 'action': 'get_link_for_ch', 'ch_id': url_to_check.split('/')[-1]}
-                                    first_hop_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(first_hop_params)}"
-                                    first_hop_resp = requests.get(first_hop_url, headers=request.headers)
-                                    # The response from this should contain the provider's domain
-                                    url_to_check = first_hop_resp.json().get('js', {}).get('cmd', '')
-                                except (requests.exceptions.RequestException, ValueError) as e:
-                                    print(f"Could not perform first-hop resolution for {url_to_check}: {e}")
-                                    continue # Skip if the first hop fails
+                                with shelve.open(CACHE_FILE) as cache:
+                                    localhost_url = url_to_check
+                                    cache_entry = cache.get(localhost_url)
+                                    
+                                    if cache_entry and (time.time() - cache_entry.get('timestamp', 0) < CACHE_EXPIRATION):
+                                        url_to_check = cache_entry['url']
+                                    else:
+                                        try:
+                                            # First hop: ask the provider to resolve localhost
+                                            first_hop_params = {'type': 'itv', 'action': 'get_link_for_ch', 'ch_id': localhost_url.split('/')[-1]}
+                                            first_hop_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(first_hop_params)}"
+                                            first_hop_resp = requests.get(first_hop_url, headers=request.headers)
+                                            
+                                            try:
+                                                resolved_url = first_hop_resp.json().get('js', {}).get('cmd', '')
+                                                if resolved_url:
+                                                    url_to_check = resolved_url
+                                                    cache[localhost_url] = {'url': resolved_url, 'timestamp': time.time()}
+                                                else:
+                                                    # If resolution fails, skip this cmd
+                                                    continue
+                                            except ValueError:
+                                                logging.error(f"First-hop response for {localhost_url} is not valid JSON. Response: {first_hop_resp.text}")
+                                                continue
+                                        except requests.exceptions.RequestException as e:
+                                            logging.error(f"Could not perform first-hop resolution for {localhost_url}: {e}")
+                                            continue # Skip if the first hop fails
 
                             # --- Standard Link Resolution ---
                             if IPTV_PROVIDER_DOMAIN in url_to_check:
@@ -100,6 +137,7 @@ def proxy(path):
                                         new_url = cache_entry['url']
                                     else:
                                         # Cache miss or expired, fetch new URL
+                                        time.sleep(4)
                                         params = {'type': 'itv', 'action': 'create_link', 'cmd': original_cmd, 'JsHttpRequest': '1-xml'}
                                         create_link_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(params)}"
                                         try:
@@ -146,6 +184,8 @@ def proxy(path):
         final_headers.append(('Content-Length', str(len(final_content))))
 
     response = Response(final_content, resp.status_code, final_headers)
+    
+    logging.info(f"--- End Request ---")
     return response
 
 if __name__ == '__main__':

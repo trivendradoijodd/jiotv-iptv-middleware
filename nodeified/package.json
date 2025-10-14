@@ -1,0 +1,37 @@
+{
+  "name": "jiotv-iptv-middleware",
+  "version": "1.0.0",
+  "description": "This middleware acts as a reverse proxy for an IPTV provider. Its primary function is to intercept requests, forward them to the IPTV provider, and then modify the responses in specific cases before returning them to the client.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch src --ext ts --exec \"npx ts-node\" src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trivendradoijodd/jiotv-iptv-middleware.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/trivendradoijodd/jiotv-iptv-middleware/issues"
+  },
+  "homepage": "https://github.com/trivendradoijodd/jiotv-iptv-middleware#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.2",
+    "@types/node-persist": "^3.1.8",
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "dotenv": "^17.2.3",
+    "node-persist": "^4.0.4",
+    "winston": "^3.18.3"
+  }
+}
