@@ -71,37 +71,51 @@ def proxy(path):
             for channel in channels:
                 if 'cmds' in channel and isinstance(channel['cmds'], list):
                     for cmd_item in channel['cmds']:
-                        # New Trigger: Look for the provider's domain in the URL
-                        if cmd_item.get('use_http_tmp_link') == '1' and IPTV_PROVIDER_DOMAIN in cmd_item.get('url', ''):
-                            original_cmd = cmd_item.get('url')
-                            # The ID is now part of the full URL, let's use the whole cmd as a key for simplicity
-                            # or extract a more stable ID if the URL format is consistent.
-                            # For now, using the command itself ensures uniqueness.
-                            channel_id = original_cmd 
-                            new_url = None
+                        url_to_check = cmd_item.get('url', '')
+                        is_temp_link = cmd_item.get('use_http_tmp_link') == '1'
 
-                            with shelve.open(CACHE_FILE) as cache:
-                                cache_entry = cache.get(channel_id)
-                                if cache_entry and (time.time() - cache_entry.get('timestamp', 0) < CACHE_EXPIRATION):
-                                    new_url = cache_entry['url']
-                                else:
-                                    # Cache miss or expired, fetch new URL
-                                    params = {'type': 'itv', 'action': 'create_link', 'cmd': original_cmd, 'JsHttpRequest': '1-xml'}
-                                    create_link_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(params)}"
-                                    try:
-                                        link_resp = requests.get(create_link_url, headers=request.headers)
-                                        fetched_url = link_resp.json().get('js', {}).get('cmd')
-                                        if fetched_url:
-                                            new_url = fetched_url
-                                            cache[channel_id] = {'url': new_url, 'timestamp': time.time()}
-                                    except (requests.exceptions.RequestException, ValueError) as e:
-                                        print(f"Could not fetch temporary link for {original_cmd}: {e}")
-                            
-                            if new_url:
-                                cmd_item['url'] = new_url
-                                cmd_item['use_http_tmp_link'] = '0'
-                                if channel.get('cmd') == original_cmd:
-                                    channel['cmd'] = new_url
+                        if is_temp_link:
+                            # --- Two-Step Resolution for 'localhost' ---
+                            if 'localhost' in url_to_check:
+                                try:
+                                    # First hop: ask the provider to resolve localhost
+                                    first_hop_params = {'type': 'itv', 'action': 'get_link_for_ch', 'ch_id': url_to_check.split('/')[-1]}
+                                    first_hop_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(first_hop_params)}"
+                                    first_hop_resp = requests.get(first_hop_url, headers=request.headers)
+                                    # The response from this should contain the provider's domain
+                                    url_to_check = first_hop_resp.json().get('js', {}).get('cmd', '')
+                                except (requests.exceptions.RequestException, ValueError) as e:
+                                    print(f"Could not perform first-hop resolution for {url_to_check}: {e}")
+                                    continue # Skip if the first hop fails
+
+                            # --- Standard Link Resolution ---
+                            if IPTV_PROVIDER_DOMAIN in url_to_check:
+                                original_cmd = url_to_check
+                                channel_id = original_cmd
+                                new_url = None
+
+                                with shelve.open(CACHE_FILE) as cache:
+                                    cache_entry = cache.get(channel_id)
+                                    if cache_entry and (time.time() - cache_entry.get('timestamp', 0) < CACHE_EXPIRATION):
+                                        new_url = cache_entry['url']
+                                    else:
+                                        # Cache miss or expired, fetch new URL
+                                        params = {'type': 'itv', 'action': 'create_link', 'cmd': original_cmd, 'JsHttpRequest': '1-xml'}
+                                        create_link_url = f"{IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php?{urlencode(params)}"
+                                        try:
+                                            link_resp = requests.get(create_link_url, headers=request.headers)
+                                            fetched_url = link_resp.json().get('js', {}).get('cmd')
+                                            if fetched_url:
+                                                new_url = fetched_url
+                                                cache[channel_id] = {'url': new_url, 'timestamp': time.time()}
+                                        except (requests.exceptions.RequestException, ValueError) as e:
+                                            print(f"Could not fetch temporary link for {original_cmd}: {e}")
+                                
+                                if new_url:
+                                    cmd_item['url'] = new_url
+                                    cmd_item['use_http_tmp_link'] = '0'
+                                    if channel.get('cmd') == original_cmd:
+                                        channel['cmd'] = new_url
             
             # Anonymize the provider by replacing its domain with our middleware's host
             import json

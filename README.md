@@ -12,6 +12,16 @@ This middleware automates the process of resolving these temporary links.
 
 ## Logic
 
+### Special Case: Handling `localhost`
+
+A key feature of this middleware is its ability to handle a special case where the IPTV provider returns a temporary link containing `localhost`. This indicates a two-step process is required to get the final stream URL.
+
+1.  **Detection:** The middleware first scans the provider's response for any channel `cmd` that contains `localhost`.
+2.  **First Hop Resolution:** If `localhost` is found, the middleware makes a **new, separate request** back to the provider. This request's purpose is to ask the provider to resolve `localhost` into a standard temporary link (which will contain the provider's actual domain).
+3.  **Standard Resolution:** Once this new temporary link is received, the middleware then proceeds with the standard link resolution process described below.
+
+### Standard Workflow
+
 1.  **Request Interception:** The middleware listens for all incoming requests from the IPTV client.
 2.  **Request Modification:** Before forwarding, the middleware inspects the request's body. It replaces any occurrences of its own address (e.g., `http://127.0.0.1:5000`) with the real IPTV provider's domain. This allows the client to work with `localhost` URLs in the request body, which the middleware translates for the provider. URL parameters are not modified.
 3.  **Request Forwarding:** It forwards the modified request to the IPTV provider's server, which is defined in the `.env` file.
