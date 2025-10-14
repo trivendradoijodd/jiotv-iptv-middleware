@@ -13,17 +13,18 @@ This middleware automates the process of resolving these temporary links.
 ## Logic
 
 1.  **Request Interception:** The middleware listens for all incoming requests from the IPTV client.
-2.  **Request Forwarding:** It forwards the incoming request to the IPTV provider's server, which is defined in the `.env` file.
-3.  **Response Inspection:** It intercepts the response from the provider.
-4.  **Conditional Modification:** It checks if the response is a JSON object. If it is, it iterates through the list of channels and looks for items that meet the following criteria:
+2.  **Request Modification:** Before forwarding, the middleware inspects the request's parameters and body. It replaces any occurrences of its own address (e.g., `http://127.0.0.1:5000`) with the real IPTV provider's domain. This allows the client to work with `localhost` URLs, which the middleware translates for the provider.
+3.  **Request Forwarding:** It forwards the modified request to the IPTV provider's server, which is defined in the `.env` file.
+4.  **Response Inspection:** It intercepts the response from the provider.
+5.  **Conditional Modification:** It checks if the response is a JSON object. If it is, it iterates through the list of channels and looks for items that meet the following criteria:
     *   The `url` field contains the IPTV provider's domain (e.g., `http://subdomain.myiptvdomain.com`).
     *   The `use_http_tmp_link` field is set to `"1"`.
-5.  **Implicit Request:** If an item matches the criteria, the middleware constructs and sends a special request to the IPTV provider's `load.php` endpoint to generate a real, playable stream URL.
-6.  **Response Modification:** The middleware parses the response from the `load.php` endpoint to get the new stream URL. It then modifies the original JSON response by:
+6.  **Implicit Request:** If an item matches the criteria, the middleware constructs and sends a special request to the IPTV provider's `load.php` endpoint to generate a real, playable stream URL.
+7.  **Response Modification:** The middleware parses the response from the `load.php` endpoint to get the new stream URL. It then modifies the original JSON response by:
     *   Replacing the temporary URL with the new, real stream URL.
     *   Changing the `use_http_tmp_link` flag to `"0"`.
-7.  **Anonymization:** Before sending the final response, the middleware replaces all occurrences of the IPTV provider's domain with its own address (e.g., `http://127.0.0.1:5000`). This ensures the client never sees the original provider's domain.
-8.  **Final Response:** The modified and anonymized JSON is sent back to the IPTV client.
+8.  **Anonymization:** Before sending the final response, the middleware replaces all occurrences of the IPTV provider's domain with its own address (e.g., `http://127.0.0.1:5000`). This ensures the client never sees the original provider's domain.
+9.  **Final Response:** The modified and anonymized JSON is sent back to the IPTV client.
 
 ## Caching
 

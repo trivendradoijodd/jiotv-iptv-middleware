@@ -40,11 +40,11 @@ curl "http://127.0.0.1:5000/stalker_portal/server/load.php?type=itv&action=get_a
 
 **What the middleware does:**
 
-1.  It receives this request.
-2.  It forwards the request to the `IPTV_PROVIDER_DOMAIN` defined in your `.env` file.
-3.  It gets the JSON response from the provider.
-4.  It scans the response. If it finds a channel with a temporary link (containing the provider's domain), it fetches the real URL, caches it, and replaces it in the JSON.
-5.  It replaces all mentions of the provider's domain in the response with its own address (`http://127.0.0.1:5000`).
-6.  Finally, it sends this clean, modified response back to your player.
+1.  It receives the request from your player.
+2.  **Request Modification:** It inspects the request URL and body, replacing any mention of `127.0.0.1:5000` with the real provider's domain from your `.env` file.
+3.  **Forwarding:** It forwards the modified request to the real IPTV provider.
+4.  **Response Modification:** It gets the JSON response from the provider, finds any temporary links, and resolves them into real, playable URLs.
+5.  **Anonymization:** It replaces all mentions of the provider's domain in the response with its own address (`http://127.0.0.1:5000`).
+6.  **Final Response:** It sends the clean, modified, and anonymized response back to your player.
 
-Your IPTV player only ever communicates with `127.0.0.1:5000` and never sees the real provider's domain.
+Your IPTV player only ever communicates with `127.0.0.1:5000` and is completely unaware of the real provider's domain.

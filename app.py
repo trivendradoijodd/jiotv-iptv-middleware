@@ -11,6 +11,7 @@ load_dotenv()
 # --- Configuration ---
 # The full domain of your IPTV provider, loaded from the .env file
 IPTV_PROVIDER_DOMAIN = os.getenv("IPTV_PROVIDER_DOMAIN", "http://subdomain.myiptvdomain.com")
+print(IPTV_PROVIDER_DOMAIN)
 # Cache settings
 CACHE_FILE = "iptv_cache.db"
 CACHE_EXPIRATION = 24 * 60 * 60  # 24 hours in seconds
@@ -22,19 +23,40 @@ def proxy(path):
     """
     Catches all requests and forwards them to the IPTV provider.
     """
+    # --- Request Modification Logic ---
+    middleware_host = request.host_url.strip('/')
+    
+    # Replace middleware host with provider domain in request params and body
+    request_params = request.args.to_dict()
+    modified_params = {}
+    for key, value in request_params.items():
+        if isinstance(value, str):
+            modified_params[key] = value.replace(middleware_host, IPTV_PROVIDER_DOMAIN)
+        else:
+            modified_params[key] = value
+
+    request_data = request.get_data()
+    try:
+        # Try to decode as text to perform replacement
+        data_str = request_data.decode('utf-8')
+        modified_data = data_str.replace(middleware_host, IPTV_PROVIDER_DOMAIN).encode('utf-8')
+    except UnicodeDecodeError:
+        # If it's binary data, leave it as is
+        modified_data = request_data
+
     # Construct the full target URL using the static domain from config
     target_url = f"{IPTV_PROVIDER_DOMAIN}/{path}"
 
-    # Forward the request to the target URL
+    # Forward the modified request to the target URL
     try:
         resp = requests.request(
             method=request.method,
             url=target_url,
             headers={key: value for (key, value) in request.headers if key != 'Host'},
-            data=request.get_data(),
+            data=modified_data,
             cookies=request.cookies,
             allow_redirects=False,
-            params=request.args
+            params=modified_params
         )
     except requests.exceptions.RequestException as e:
         return f"Error connecting to IPTV provider: {e}", 502
