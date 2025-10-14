@@ -13,7 +13,7 @@ This middleware automates the process of resolving these temporary links.
 ## Logic
 
 1.  **Request Interception:** The middleware listens for all incoming requests from the IPTV client.
-2.  **Request Modification:** Before forwarding, the middleware inspects the request's parameters and body. It replaces any occurrences of its own address (e.g., `http://127.0.0.1:5000`) with the real IPTV provider's domain. This allows the client to work with `localhost` URLs, which the middleware translates for the provider.
+2.  **Request Modification:** Before forwarding, the middleware inspects the request's body. It replaces any occurrences of its own address (e.g., `http://127.0.0.1:5000`) with the real IPTV provider's domain. This allows the client to work with `localhost` URLs in the request body, which the middleware translates for the provider. URL parameters are not modified.
 3.  **Request Forwarding:** It forwards the modified request to the IPTV provider's server, which is defined in the `.env` file.
 4.  **Response Inspection:** It intercepts the response from the provider.
 5.  **Conditional Modification:** It checks if the response is a JSON object. If it is, it iterates through the list of channels and looks for items that meet the following criteria:

@@ -26,15 +26,7 @@ def proxy(path):
     # --- Request Modification Logic ---
     middleware_host = request.host_url.strip('/')
     
-    # Replace middleware host with provider domain in request params and body
-    request_params = request.args.to_dict()
-    modified_params = {}
-    for key, value in request_params.items():
-        if isinstance(value, str):
-            modified_params[key] = value.replace(middleware_host, IPTV_PROVIDER_DOMAIN)
-        else:
-            modified_params[key] = value
-
+    # Replace middleware host with provider domain in the request body
     request_data = request.get_data()
     try:
         # Try to decode as text to perform replacement
@@ -56,7 +48,7 @@ def proxy(path):
             data=modified_data,
             cookies=request.cookies,
             allow_redirects=False,
-            params=modified_params
+            params=request.args # Use original, unmodified params
         )
     except requests.exceptions.RequestException as e:
         return f"Error connecting to IPTV provider: {e}", 502
