@@ -22,6 +22,14 @@ export const updateLastKnownGoodInfo = (token: string, headers: Record<string, a
 
 export const getLatestToken = () => lastToken;
 
+const replaceLocalhost = (headers: Record<string, string>): Record<string, string> => {
+    const newHeaders: Record<string, string> = {};
+    for (const key in headers) {
+        newHeaders[key] = headers[key].replace(/localhost:5000/g, new URL(IPTV_PROVIDER_DOMAIN).host);
+    }
+    return newHeaders;
+};
+
 const resolveNewUrl = async (url: string): Promise<string> => {
     logger.info(`Resolving URL: ${url}`);
 
@@ -41,6 +49,7 @@ const resolveNewUrl = async (url: string): Promise<string> => {
     }
 
     try {
+        const processedHeaders = replaceLocalhost(headers);
         const startTime = Date.now();
         const handshakeResponse = await axios.get<THandshakeResponse>(
             `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
@@ -51,7 +60,7 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                     token: token,
                     JsHttpRequest: '1-xml',
                 },
-                headers: headers,
+                headers: processedHeaders,
             }
         );
         const handshakeTime = Date.now() - startTime;
@@ -91,6 +100,7 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                 params: config?.params,
                 status: response?.status,
                 data: response?.data,
+                config
             };
             logger.error(JSON.stringify(logData, null, 2));
         } else {
