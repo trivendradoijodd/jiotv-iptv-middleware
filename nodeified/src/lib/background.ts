@@ -34,6 +34,7 @@ const resolveNewUrl = async (url: string): Promise<string> => {
     }
 
     try {
+        const startTime = Date.now();
         const handshakeResponse = await axios.get<THandshakeResponse>(
             `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
             {
@@ -46,10 +47,13 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                 headers: headers,
             }
         );
+        const handshakeTime = Date.now() - startTime;
+        logger.info(`GET ${handshakeResponse.request.path} ${handshakeResponse.status} - ${handshakeTime} ms`);
 
         const newToken = handshakeResponse.data.js.token;
         lastToken = newToken; // Update for subsequent requests
 
+        const createLinkStartTime = Date.now();
         const createLinkResponse = await axios.get<TCreateLinkResponse>(
             `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
             {
@@ -65,6 +69,8 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                 },
             }
         );
+        const createLinkTime = Date.now() - createLinkStartTime;
+        logger.info(`GET ${createLinkResponse.request.path} ${createLinkResponse.status} - ${createLinkTime} ms`);
 
         return createLinkResponse.data.js.cmd;
 
