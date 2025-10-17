@@ -737,3 +737,5 @@
 2025-10-17T13:47:17.019Z - INFO - Incoming Request: GET /stalker_portal/server/load.php?type=itv&action=create_link&cmd=ffrt%20http%3A%2F%2Flocalhost%2Fch%2F12488&JsHttpRequest=1-xml
 2025-10-17T13:47:17.021Z - INFO - Serving from cache: ffrt http://localhost/ch/12488
 2025-10-17T13:47:17.023Z - INFO - --- End Request (from cache) ---
+2025-10-17T13:52:42.502Z - INFO - Cache initialized successfully.
+2025-10-17T13:52:47.773Z - INFO - Cache initialized successfully.

@@ -157,13 +157,18 @@ const handleRequest = async (req: Request, res: Response) => {
             cmd && typeof cmd === 'string' && cmd.includes('localhost')
         ) {
             const cacheKey = cmd;
-            const responseToCache = {
-                status: providerResponse.status,
-                headers: res.getHeaders(),
-                data: finalContent.toString('base64'),
-            };
-            await setItem(cacheKey, responseToCache);
-            logger.info(`Cached response for: ${cacheKey}`);
+            const responseBody = finalContent.toString('utf-8');
+            if (!responseBody.includes('Unauthorized')) {
+                const responseToCache = {
+                    status: providerResponse.status,
+                    headers: res.getHeaders(),
+                    data: finalContent.toString('base64'),
+                };
+                await setItem(cacheKey, responseToCache);
+                logger.info(`Cached response for: ${cacheKey}`);
+            } else {
+                logger.info(`Not caching unauthorized response for: ${cacheKey}`);
+            }
         }
 
     } catch (error: unknown) {
