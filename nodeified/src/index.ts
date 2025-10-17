@@ -1,9 +1,13 @@
 import express, { Request, Response, NextFunction } from 'express';
 import axios, { Method } from 'axios';
 import dotenv from 'dotenv';
-import * as storage from 'node-persist';
+import { init, getItem, setItem } from 'node-persist';
 import winston from 'winston';
 import { URLSearchParams } from 'url';
+import morgan from 'morgan';
+import fs from 'fs';
+import path from 'path';
+import PQueue from 'p-queue';
 
 dotenv.config();
 
@@ -27,20 +31,49 @@ const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// --- Morgan HTTP Request Logging Setup ---
+const httpLogStream = fs.createWriteStream(path.join(__dirname, '../http.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: httpLogStream }));
+
 // Middleware to get raw body
 app.use(express.raw({ type: '*/*', limit: '50mb' }));
 
+// --- Request Queue Setup ---
+const queue = new PQueue({ concurrency: 5 });
+
 const initCache = async () => {
-    await storage.init({
+    await init({
         dir: 'iptv_cache',
         ttl: CACHE_EXPIRATION,
     });
 };
-initCache();
 
-app.all(/.*/, async (req: Request, res: Response) => {
+const handleRequest = async (req: Request, res: Response) => {
     logger.info(`--- New Request ---`);
     logger.info(`Incoming Request: ${req.method} ${req.originalUrl}`);
+    
+    const { type, action, cmd } = req.query;
+
+    if (
+        req.path === '/stalker_portal/server/load.php' &&
+        type === 'itv' &&
+        action === 'create_link' &&
+        cmd && typeof cmd === 'string' && cmd.includes('localhost')
+    ) {
+        const cacheKey = cmd;
+        const cachedResponse = await getItem(cacheKey);
+
+        if (cachedResponse) {
+            logger.info(`Serving from cache: ${cacheKey}`);
+            const { status, headers, data } = cachedResponse;
+            Object.keys(headers).forEach(key => {
+                res.setHeader(key, headers[key]);
+            });
+            res.status(status).send(Buffer.from(data, 'base64'));
+            logger.info(`--- End Request (from cache) ---`);
+            return;
+        }
+    }
     logger.info(`Headers: ${JSON.stringify(req.headers)}`);
     if (req.body && req.body.length > 0) {
         logger.info(`Body: ${req.body.toString('utf-8')}`);
@@ -117,6 +150,22 @@ app.all(/.*/, async (req: Request, res: Response) => {
         res.setHeader('Content-Length', Buffer.byteLength(finalContent));
         res.status(providerResponse.status).send(finalContent);
 
+        if (
+            req.path === '/stalker_portal/server/load.php' &&
+            type === 'itv' &&
+            action === 'create_link' &&
+            cmd && typeof cmd === 'string' && cmd.includes('localhost')
+        ) {
+            const cacheKey = cmd;
+            const responseToCache = {
+                status: providerResponse.status,
+                headers: res.getHeaders(),
+                data: finalContent.toString('base64'),
+            };
+            await setItem(cacheKey, responseToCache);
+            logger.info(`Cached response for: ${cacheKey}`);
+        }
+
     } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
             logger.error(`Error connecting to IPTV provider: ${error.message}`);
@@ -130,8 +179,23 @@ app.all(/.*/, async (req: Request, res: Response) => {
         }
     }
     logger.info(`--- End Request ---`);
+};
+
+app.all(/.*/, (req: Request, res: Response) => {
+    queue.add(() => handleRequest(req, res));
 });
 
-app.listen(PORT, () => {
-    console.log(`Middleware server is running on http://localhost:${PORT}`);
-});
+const startServer = async () => {
+    try {
+        await initCache();
+        logger.info('Cache initialized successfully.');
+        app.listen(PORT, () => {
+            console.log(`Middleware server is running on http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        logger.error('Failed to start server:', error);
+        process.exit(1);
+    }
+};
+
+startServer();

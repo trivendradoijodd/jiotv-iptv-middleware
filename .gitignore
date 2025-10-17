@@ -14,3 +14,10 @@ cache.db*
 *.db
 
 nodeified/node_modules
+
+# Log files
+iptv_proxy.log
+http.log
+nodeified/iptv_proxy.log
+nodeified/http.log
+nodeified/iptv_cache/
