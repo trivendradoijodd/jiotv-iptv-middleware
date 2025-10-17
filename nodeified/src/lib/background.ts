@@ -26,11 +26,18 @@ const resolveNewUrl = async (url: string): Promise<string> => {
     logger.info(`Resolving URL: ${url}`);
 
     const token = lastToken || lastKnownGoodToken;
-    const headers = (Object.keys(lastHandshakeHeaders).length > 0) ? lastHandshakeHeaders : lastKnownGoodHeaders;
+    let headers = (Object.keys(lastHandshakeHeaders).length > 0) ? lastHandshakeHeaders : lastKnownGoodHeaders;
 
-    if (!token || !headers) {
-        logger.warn('Authentication information not available. Skipping URL resolution.');
+    if (!token) {
+        logger.warn('Authentication token not available. Skipping URL resolution.');
         return url;
+    }
+
+    if (Object.keys(headers).length === 0) {
+        headers = {
+            'Referer': 'http://localhost:5000/stalker_portal/c/',
+            'Host': 'localhost:5000',
+        };
     }
 
     try {
