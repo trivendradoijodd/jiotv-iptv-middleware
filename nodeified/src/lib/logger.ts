@@ -8,6 +8,7 @@ const logger = winston.createLogger({
     ),
     transports: [
         new winston.transports.File({ filename: 'iptv_proxy.log' }),
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
         new winston.transports.Console()
     ]
 });

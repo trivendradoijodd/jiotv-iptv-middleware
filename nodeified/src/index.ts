@@ -5,6 +5,7 @@ import { initCache } from './lib/cache';
 import { handleRequest } from './lib/requestHandler';
 import logger from './lib/logger';
 import { PORT } from './config';
+import { processChannelsInBackground } from './lib/background';
 
 const app = express();
 
@@ -24,6 +25,7 @@ const startServer = async () => {
         app.listen(PORT, () => {
             console.log(`Middleware server is running on http://localhost:${PORT}`);
         });
+
     } catch (error) {
         logger.error('Failed to start server:', error);
         process.exit(1);

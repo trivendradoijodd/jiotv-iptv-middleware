@@ -75,7 +75,20 @@ const resolveNewUrl = async (url: string): Promise<string> => {
         return createLinkResponse.data.js.cmd;
 
     } catch (error) {
-        logger.error('Error during URL resolution:', error);
+        if (axios.isAxiosError(error)) {
+            const { config, response } = error;
+            const logData = {
+                message: 'Error during URL resolution',
+                url: config?.url,
+                method: config?.method,
+                params: config?.params,
+                status: response?.status,
+                data: response?.data,
+            };
+            logger.error(JSON.stringify(logData, null, 2));
+        } else {
+            logger.error(`An unexpected error occurred during URL resolution: ${error}`);
+        }
         return url; // Return original URL on error
     }
 };
