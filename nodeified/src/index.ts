@@ -9,7 +9,9 @@ import { processChannelsInBackground } from './lib/background';
 
 const app = express();
 
-app.use(morgan('dev'));
+app.use(morgan('dev', {
+    skip: (req, res) => res.statusCode < 400
+}));
 
 app.use(express.raw({ type: '*/*', limit: '50mb' }));
 
