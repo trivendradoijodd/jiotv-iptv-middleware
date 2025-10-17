@@ -1,14 +1,51 @@
-import { IChannelDataResponse } from '../types';
+import { IChannelDataResponse, THandshakeResponse } from '../types';
 import { getCachedItem, setCachedItem } from './cache';
 import logger from './logger';
+import axios from 'axios';
+import { IPTV_PROVIDER_DOMAIN } from '../config';
 
 const processingKeys = new Set<string>();
+let lastHandshakeHeaders: Record<string, string> = {};
+let lastToken: string | null = null;
+
+export const updateHandshakeInfo = (token: string, headers: Record<string, any>) => {
+    lastToken = token;
+    lastHandshakeHeaders = headers;
+};
 
 const resolveNewUrl = async (url: string): Promise<string> => {
-    // Placeholder for the actual URL resolution logic
     logger.info(`Resolving URL: ${url}`);
-    // This is a placeholder. The actual logic will be provided later.
-    return url.replace('localhost', 'resolved.host.com');
+
+    if (!lastToken || !lastHandshakeHeaders) {
+        logger.warn('Handshake information not available. Skipping URL resolution.');
+        return url;
+    }
+
+    try {
+        const handshakeResponse = await axios.get<THandshakeResponse>(
+            `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
+            {
+                params: {
+                    type: 'stb',
+                    action: 'handshake',
+                    token: lastToken,
+                    JsHttpRequest: '1-xml',
+                },
+                headers: lastHandshakeHeaders,
+            }
+        );
+
+        const newToken = handshakeResponse.data.js.token;
+        lastToken = newToken; // Update for subsequent requests
+
+        // Placeholder for the next steps (get_profile, etc.)
+        // For now, we'll just return a modified URL
+        return url.replace('localhost', 'resolved.host.com');
+
+    } catch (error) {
+        logger.error('Error during handshake request for URL resolution:', error);
+        return url; // Return original URL on error
+    }
 };
 
 export const processChannelsInBackground = async (cacheKey: string) => {

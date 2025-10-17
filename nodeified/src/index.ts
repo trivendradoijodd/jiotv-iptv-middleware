@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import dotenv from 'dotenv';
 import morgan from 'morgan';
 import fs from 'fs';
 import path from 'path';
@@ -7,11 +6,9 @@ import PQueue from 'p-queue';
 import { initCache } from './lib/cache';
 import { handleRequest } from './lib/requestHandler';
 import logger from './lib/logger';
-
-dotenv.config();
+import { PORT } from './config';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 const httpLogStream = fs.createWriteStream(path.join(__dirname, '../http.log'), { flags: 'a' });
 app.use(morgan('combined', { stream: httpLogStream }));

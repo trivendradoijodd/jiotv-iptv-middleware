@@ -1,7 +1,6 @@
 import { init, getItem, setItem } from 'node-persist';
 import logger from './logger';
-
-const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+import { CACHE_EXPIRATION } from '../config';
 
 export const initCache = async () => {
     await init({

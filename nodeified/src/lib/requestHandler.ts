@@ -2,16 +2,21 @@ import { Request, Response } from 'express';
 import axios, { Method } from 'axios';
 import { URLSearchParams } from 'url';
 import { getCachedItem, setCachedItem } from './cache';
-import { processChannelsInBackground } from './background';
+import { processChannelsInBackground, updateHandshakeInfo } from './background';
 import logger from './logger';
-
-const IPTV_PROVIDER_DOMAIN = process.env.IPTV_PROVIDER_DOMAIN || 'http://subdomain.myiptvdomain.com';
+import { IPTV_PROVIDER_DOMAIN } from '../config';
 
 export const handleRequest = async (req: Request, res: Response) => {
     logger.info(`--- New Request ---`);
     logger.info(`Incoming Request: ${req.method} ${req.originalUrl}`);
     
-    const { type, action, cmd } = req.query;
+    const { type, action, cmd, token } = req.query;
+
+    if (type === 'stb' && action === 'handshake') {
+        if (token && typeof token === 'string') {
+            updateHandshakeInfo(token, req.headers as Record<string, any>);
+        }
+    }
 
     const isChannelListRequest = req.path === '/stalker_portal/server/load.php' &&
     ((type === 'itv' && action === 'get_all_channels') || (type === 'radio' && action === 'get_ordered_list'));

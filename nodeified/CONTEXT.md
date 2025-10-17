@@ -33,6 +33,7 @@ This document outlines the plan and architecture for implementing caching and ba
     - For each `Cmd` in `channel.cmds` where the `url` contains "localhost", a placeholder function (`resolveNewUrl`) is called to resolve the new URL.
     - After iterating through `channel.cmds`, the specific `Cmd` element where `Cmd.url` matches the original `Channel.cmd` string is updated with the resolved value.
 - **Rate Limiting**: A 2-second delay is added after processing each `Cmd` object.
+- **Detailed Logic**: The detailed, multi-step process for URL resolution is documented in [ResolveURLContext.md](./ResolveURLContext.md).
 
 ## 4. Cache and State Updates
 
