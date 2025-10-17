@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import axios, { Method } from 'axios';
 import { URLSearchParams } from 'url';
 import { getCachedItem, setCachedItem } from './cache';
-import { processChannelsInBackground, updateHandshakeInfo, getLatestToken } from './background';
+import { processChannelsInBackground, updateHandshakeInfo, getLatestToken, updateLastKnownGoodInfo } from './background';
 import logger from './logger';
 import { IPTV_PROVIDER_DOMAIN } from '../config';
 
@@ -16,6 +16,11 @@ export const handleRequest = async (req: Request, res: Response) => {
         if (token && typeof token === 'string') {
             updateHandshakeInfo(token, req.headers as Record<string, any>);
         }
+    }
+
+    if (req.headers.authorization) {
+        const token = req.headers.authorization.split(' ')[1];
+        updateLastKnownGoodInfo(token, req.headers as Record<string, any>);
     }
 
     const isChannelListRequest = req.path === '/stalker_portal/server/load.php' &&

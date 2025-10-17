@@ -7,10 +7,17 @@ import { IPTV_PROVIDER_DOMAIN } from '../config';
 const processingKeys = new Set<string>();
 let lastHandshakeHeaders: Record<string, string> = {};
 let lastToken: string | null = null;
+let lastKnownGoodHeaders: Record<string, string> = {};
+let lastKnownGoodToken: string | null = null;
 
 export const updateHandshakeInfo = (token: string, headers: Record<string, any>) => {
     lastToken = token;
     lastHandshakeHeaders = headers;
+};
+
+export const updateLastKnownGoodInfo = (token: string, headers: Record<string, any>) => {
+    lastKnownGoodToken = token;
+    lastKnownGoodHeaders = headers;
 };
 
 export const getLatestToken = () => lastToken;
@@ -18,8 +25,11 @@ export const getLatestToken = () => lastToken;
 const resolveNewUrl = async (url: string): Promise<string> => {
     logger.info(`Resolving URL: ${url}`);
 
-    if (!lastToken || !lastHandshakeHeaders) {
-        logger.warn('Handshake information not available. Skipping URL resolution.');
+    const token = lastToken || lastKnownGoodToken;
+    const headers = (Object.keys(lastHandshakeHeaders).length > 0) ? lastHandshakeHeaders : lastKnownGoodHeaders;
+
+    if (!token || !headers) {
+        logger.warn('Authentication information not available. Skipping URL resolution.');
         return url;
     }
 
@@ -30,10 +40,10 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                 params: {
                     type: 'stb',
                     action: 'handshake',
-                    token: lastToken,
+                    token: token,
                     JsHttpRequest: '1-xml',
                 },
-                headers: lastHandshakeHeaders,
+                headers: headers,
             }
         );
 
