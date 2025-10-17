@@ -64,7 +64,7 @@ const handleRequest = async (req: Request, res: Response) => {
         const cachedResponse = await getItem(cacheKey);
 
         if (cachedResponse) {
-            logger.info(`Serving from cache: ${cacheKey}`);
+            logger.info(`******************Serving from cache**************: ${cacheKey}\n`);
             const { status, headers, data } = cachedResponse;
             Object.keys(headers).forEach(key => {
                 res.setHeader(key, headers[key]);
