@@ -17,12 +17,11 @@ const queue = new PQueue({ concurrency: 5 });
 
 app.get('/trigger-background-processing', (req: Request, res: Response) => {
     const { cacheKey } = req.query;
-    if (typeof cacheKey === 'string') {
-        processChannelsInBackground(cacheKey);
-        res.status(200).send(`Background processing triggered for cacheKey: ${cacheKey}`);
-    } else {
-        res.status(400).send('Missing or invalid cacheKey query parameter.');
-    }
+    const defaultCacheKey = '/stalker_portal/server/load.php?type=itv&action=get_all_channels&JsHttpRequest=1-xml';
+    const keyToProcess = (typeof cacheKey === 'string') ? cacheKey : defaultCacheKey;
+
+    processChannelsInBackground(keyToProcess);
+    res.status(200).send(`Background processing triggered for cacheKey: ${keyToProcess}`);
 });
 
 app.all(/.*/, (req: Request, res: Response) => {
