@@ -90,8 +90,14 @@ export const processChannelsInBackground = async (cacheKey: string) => {
             return;
         }
 
+        let resolutionCount = 0;
+
         for (const channel of response.js.data) {
             if (channel.use_http_tmp_link === '1' && channel.cmd.includes('localhost')) {
+                if (resolutionCount >= 3) {
+                    logger.info('Reached resolution limit of 3. Skipping further resolutions.');
+                    break;
+                }
                 let channelModified = false;
                 const originalCmdUrl = channel.cmd;
                 let mainCmdIndex = -1;
@@ -102,9 +108,12 @@ export const processChannelsInBackground = async (cacheKey: string) => {
                         mainCmdIndex = i;
                     }
                     if (cmd.url.includes('localhost')) {
-                        cmd.url = await resolveNewUrl(cmd.url);
-                        channelModified = true;
-                        await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay
+                        if (resolutionCount < 3) {
+                            cmd.url = await resolveNewUrl(cmd.url);
+                            channelModified = true;
+                            resolutionCount++;
+                            await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay
+                        }
                     }
                 }
 
