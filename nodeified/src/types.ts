@@ -93,3 +93,12 @@ export type THandshakeResponse = TServerResponse<{
     token: string;
     random: string;
 }>
+
+export type TCreateLinkResponse = TServerResponse<{
+    id: string;
+    cmd: string;
+    streamer_id: number;
+    link_id: number;
+    load: number;
+    error: string;
+}>

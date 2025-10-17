@@ -1,4 +1,4 @@
-import { IChannelDataResponse, THandshakeResponse } from '../types';
+import { IChannelDataResponse, THandshakeResponse, TCreateLinkResponse } from '../types';
 import { getCachedItem, setCachedItem } from './cache';
 import logger from './logger';
 import axios from 'axios';
@@ -12,6 +12,8 @@ export const updateHandshakeInfo = (token: string, headers: Record<string, any>)
     lastToken = token;
     lastHandshakeHeaders = headers;
 };
+
+export const getLatestToken = () => lastToken;
 
 const resolveNewUrl = async (url: string): Promise<string> => {
     logger.info(`Resolving URL: ${url}`);
@@ -38,12 +40,26 @@ const resolveNewUrl = async (url: string): Promise<string> => {
         const newToken = handshakeResponse.data.js.token;
         lastToken = newToken; // Update for subsequent requests
 
-        // Placeholder for the next steps (get_profile, etc.)
-        // For now, we'll just return a modified URL
-        return url.replace('localhost', 'resolved.host.com');
+        const createLinkResponse = await axios.get<TCreateLinkResponse>(
+            `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
+            {
+                params: {
+                    type: 'itv',
+                    action: 'create_link',
+                    cmd: encodeURIComponent(url),
+                    JsHttpRequest: '1-xml',
+                },
+                headers: {
+                    ...lastHandshakeHeaders,
+                    Authorization: `Bearer ${newToken}`,
+                },
+            }
+        );
+
+        return createLinkResponse.data.js.cmd;
 
     } catch (error) {
-        logger.error('Error during handshake request for URL resolution:', error);
+        logger.error('Error during URL resolution:', error);
         return url; // Return original URL on error
     }
 };

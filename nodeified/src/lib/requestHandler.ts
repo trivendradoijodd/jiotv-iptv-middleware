@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import axios, { Method } from 'axios';
 import { URLSearchParams } from 'url';
 import { getCachedItem, setCachedItem } from './cache';
-import { processChannelsInBackground, updateHandshakeInfo } from './background';
+import { processChannelsInBackground, updateHandshakeInfo, getLatestToken } from './background';
 import logger from './logger';
 import { IPTV_PROVIDER_DOMAIN } from '../config';
 
@@ -68,10 +68,16 @@ export const handleRequest = async (req: Request, res: Response) => {
     logger.info(`Forwarding Request to: ${fullTargetUrl}`);
 
     try {
+        const headers = { ...req.headers, host: new URL(IPTV_PROVIDER_DOMAIN).host };
+        const latestToken = getLatestToken();
+        if (latestToken && headers.authorization) {
+            headers.authorization = `Bearer ${latestToken}`;
+        }
+
         const providerResponse = await axios({
             method: req.method as Method,
             url: fullTargetUrl,
-            headers: { ...req.headers, host: new URL(IPTV_PROVIDER_DOMAIN).host },
+            headers,
             data: modifiedData,
             responseType: 'arraybuffer',
             validateStatus: () => true,
