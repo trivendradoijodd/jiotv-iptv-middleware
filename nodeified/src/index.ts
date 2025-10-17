@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import morgan from 'morgan';
+import fs from 'fs';
+import path from 'path';
 import PQueue from 'p-queue';
 import { initCache } from './lib/cache';
 import { handleRequest } from './lib/requestHandler';
@@ -9,6 +11,8 @@ import { processChannelsInBackground } from './lib/background';
 
 const app = express();
 
+const httpLogStream = fs.createWriteStream(path.join(__dirname, '../http.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: httpLogStream }));
 app.use(morgan('dev', {
     skip: (req, res) => res.statusCode < 400
 }));
