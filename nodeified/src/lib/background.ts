@@ -2,7 +2,7 @@ import { IChannelDataResponse, THandshakeResponse, TCreateLinkResponse } from '.
 import { getCachedItem, setCachedItem } from './cache';
 import logger from './logger';
 import axios from 'axios';
-import { IPTV_PROVIDER_DOMAIN } from '../config';
+import { IPTV_PROVIDER_DOMAIN, URL_RESOLUTION_DELAY } from '../config';
 
 const processingKeys = new Set<string>();
 let lastHandshakeHeaders: Record<string, string> = {};
@@ -148,7 +148,7 @@ export const processChannelsInBackground = async (cacheKey: string) => {
                             cmd.url = await resolveNewUrl(cmd.url);
                             channelModified = true;
                             resolutionCount++;
-                            await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay
+                            await new Promise(resolve => setTimeout(resolve, URL_RESOLUTION_DELAY));
                         }
                     }
                 }
