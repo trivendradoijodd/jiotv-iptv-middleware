@@ -22,14 +22,17 @@ export const updateLastKnownGoodInfo = (token: string, headers: Record<string, a
 
 export const getLatestToken = () => lastToken;
 
-interface CustomHeaders extends Record<string, string> {
+interface CustomHeaders extends Record<string, string | undefined> {
     Cookie?: string;
 }
 
-const replaceLocalhost = (headers: Record<string, string>): Record<string, string> => {
+const replaceLocalhost = (headers: CustomHeaders): Record<string, string> => {
     const newHeaders: Record<string, string> = {};
     for (const key in headers) {
-        newHeaders[key] = headers[key].replace(/localhost:5000/g, new URL(IPTV_PROVIDER_DOMAIN).host);
+        const value = headers[key];
+        if (typeof value === 'string') {
+            newHeaders[key] = value.replace(/localhost:5000/g, new URL(IPTV_PROVIDER_DOMAIN).host);
+        }
     }
     return newHeaders;
 };
@@ -64,27 +67,27 @@ const resolveNewUrl = async (url: string): Promise<string> => {
         headers.Cookie = dynamicCookie;
     }
     
-    const processedHeaders = replaceLocalhost(headers as Record<string, string>);
+    const processedHeaders = replaceLocalhost(headers);
 
     try {
-        const startTime = Date.now();
-        const handshakeResponse = await axios.get<THandshakeResponse>(
-            `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
-            {
-                params: {
-                    type: 'stb',
-                    action: 'handshake',
-                    token: token,
-                    JsHttpRequest: '1-xml',
-                },
-                headers: processedHeaders,
-            }
-        );
-        const handshakeTime = Date.now() - startTime;
-        logger.info(`GET ${handshakeResponse.request.path} ${handshakeResponse.status} - ${handshakeTime} ms`);
+        // const startTime = Date.now();
+        // const handshakeResponse = await axios.get<THandshakeResponse>(
+        //     `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
+        //     {
+        //         params: {
+        //             type: 'stb',
+        //             action: 'handshake',
+        //             token: token,
+        //             JsHttpRequest: '1-xml',
+        //         },
+        //         headers: processedHeaders,
+        //     }
+        // );
+        // const handshakeTime = Date.now() - startTime;
+        // logger.info(`GET ${handshakeResponse.request.path} ${handshakeResponse.status} - ${handshakeTime} ms`);
 
-        const newToken = handshakeResponse.data.js.token;
-        lastToken = newToken; // Update for subsequent requests
+        // const newToken = handshakeResponse.data.js.token;
+        // lastToken = newToken; // Update for subsequent requests
 
         const createLinkStartTime = Date.now();
         const createLinkResponse = await axios.get<TCreateLinkResponse>(
@@ -98,7 +101,7 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                 },
                 headers: {
                     ...processedHeaders,
-                    Authorization: `Bearer ${newToken}`,
+                    Authorization: `Bearer ${token}`,
                 },
             }
         );
@@ -147,7 +150,7 @@ export const processChannelsInBackground = async (cacheKey: string) => {
 
         for (const channel of response.js.data) {
             if (channel.use_http_tmp_link === '1' && channel.cmd.includes('localhost')) {
-                if (resolutionCount >= 3) {
+                if (resolutionCount >= 100) {
                     logger.info('Reached resolution limit of 3. Skipping further resolutions.');
                     break;
                 }
