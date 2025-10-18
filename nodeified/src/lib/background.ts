@@ -37,10 +37,48 @@ const replaceLocalhost = (headers: CustomHeaders): Record<string, string> => {
     return newHeaders;
 };
 
+const performHandshake = async (token: string, headers: Record<string, string>): Promise<string | null> => {
+    try {
+        const startTime = Date.now();
+        const response = await axios.get<THandshakeResponse>(
+            `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
+            {
+                params: { type: 'stb', action: 'handshake', token: token, JsHttpRequest: '1-xml' },
+                headers,
+            }
+        );
+        const handshakeTime = Date.now() - startTime;
+        logger.info(`GET ${response.request.path} ${response.status} - ${handshakeTime} ms`);
+        const newToken = response.data.js.token;
+        lastToken = newToken;
+        return newToken;
+    } catch (error) {
+        logger.error('Handshake request failed:', error);
+        return null;
+    }
+};
+
+const createLink = async (url: string, token: string, headers: Record<string, string>): Promise<string> => {
+    const startTime = Date.now();
+    const response = await axios.get<TCreateLinkResponse>(
+        `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
+        {
+            params: { type: 'itv', action: 'create_link', cmd: encodeURIComponent(url), JsHttpRequest: '1-xml' },
+            headers: { ...headers, Authorization: `Bearer ${token}` },
+        }
+    );
+    const createLinkTime = Date.now() - startTime;
+    logger.info(`GET ${response.request.path} ${response.status} - ${createLinkTime} ms`);
+    if (!response.data.js.cmd) {
+        throw new Error('`cmd` not found in `create_link` response');
+    }
+    return response.data.js.cmd;
+};
+
 const resolveNewUrl = async (url: string): Promise<string> => {
     logger.info(`Resolving URL: ${url}`);
 
-    const token = lastToken || lastKnownGoodToken;
+    let token = lastToken || lastKnownGoodToken;
     const dynamicHeaders = (Object.keys(lastHandshakeHeaders).length > 0) ? lastHandshakeHeaders : lastKnownGoodHeaders;
 
     if (!token) {
@@ -66,68 +104,40 @@ const resolveNewUrl = async (url: string): Promise<string> => {
     } else {
         headers.Cookie = dynamicCookie;
     }
-    
+
     const processedHeaders = replaceLocalhost(headers);
 
     try {
-        // const startTime = Date.now();
-        // const handshakeResponse = await axios.get<THandshakeResponse>(
-        //     `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
-        //     {
-        //         params: {
-        //             type: 'stb',
-        //             action: 'handshake',
-        //             token: token,
-        //             JsHttpRequest: '1-xml',
-        //         },
-        //         headers: processedHeaders,
-        //     }
-        // );
-        // const handshakeTime = Date.now() - startTime;
-        // logger.info(`GET ${handshakeResponse.request.path} ${handshakeResponse.status} - ${handshakeTime} ms`);
-
-        // const newToken = handshakeResponse.data.js.token;
-        // lastToken = newToken; // Update for subsequent requests
-
-        const createLinkStartTime = Date.now();
-        const createLinkResponse = await axios.get<TCreateLinkResponse>(
-            `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
-            {
-                params: {
-                    type: 'itv',
-                    action: 'create_link',
-                    cmd: encodeURIComponent(url),
-                    JsHttpRequest: '1-xml',
-                },
-                headers: {
-                    ...processedHeaders,
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
-        const createLinkTime = Date.now() - createLinkStartTime;
-        logger.info(`GET ${createLinkResponse.request.path} ${createLinkResponse.status} - ${createLinkTime} ms`);
-
-        return createLinkResponse.data.js.cmd;
-
+        return await createLink(url, token, processedHeaders);
     } catch (error) {
-        if (axios.isAxiosError(error)) {
-            const { config, response } = error;
-            const logData = {
-                message: 'Error during URL resolution',
-                url: config?.url,
-                method: config?.method,
-                params: config?.params,
-                status: response?.status,
-                data: response?.data,
-                config
-            };
-            logger.error(JSON.stringify(logData, null, 2));
-        } else {
-            logger.error(`An unexpected error occurred during URL resolution: ${error}`);
+        logger.warn('Initial `create_link` call failed. Attempting handshake and retry.', error);
+        const newToken = await performHandshake(token, processedHeaders);
+        if (newToken) {
+            try {
+                return await createLink(url, newToken, processedHeaders);
+            } catch (retryError) {
+                logger.error('Retry `create_link` call failed after successful handshake.', retryError);
+            }
         }
-        return url; // Return original URL on error
     }
+
+    return url;
+};
+
+interface ITaskProgress {
+    status: 'processing' | 'completed' | 'error';
+    total: number;
+    processed: number;
+    lastUpdatedAt: string;
+}
+
+const backgroundTaskProgress = new Map<string, ITaskProgress>();
+
+export const getBackgroundTaskProgress = (cacheKey?: string) => {
+    if (cacheKey) {
+        return backgroundTaskProgress.get(cacheKey);
+    }
+    return Object.fromEntries(backgroundTaskProgress);
 };
 
 export const processChannelsInBackground = async (cacheKey: string) => {
@@ -138,60 +148,60 @@ export const processChannelsInBackground = async (cacheKey: string) => {
     }
 
     processingKeys.add(cacheKey);
+    const progress: ITaskProgress = {
+        status: 'processing',
+        total: 0,
+        processed: 0,
+        lastUpdatedAt: new Date().toISOString(),
+    };
+    backgroundTaskProgress.set(cacheKey, progress);
 
     try {
         const response: IChannelDataResponse | undefined = await getCachedItem(cacheKey);
         if (!response || !response.js || !response.js.data) {
             logger.warn(`No data found in cache for ${cacheKey} to process.`);
+            progress.status = 'error';
             return;
         }
 
-        let resolutionCount = 0;
+        const channelsToProcess = response.js.data.filter(c => c.use_http_tmp_link === '1' && c.cmd.includes('localhost'));
+        progress.total = channelsToProcess.length;
 
-        for (const channel of response.js.data) {
-            if (channel.use_http_tmp_link === '1' && channel.cmd.includes('localhost')) {
-                if (resolutionCount >= 100) {
-                    logger.info('Reached resolution limit of 3. Skipping further resolutions.');
-                    break;
-                }
-                let channelModified = false;
-                const originalCmdUrl = channel.cmd;
-                let mainCmdIndex = -1;
+        for (const channel of channelsToProcess) {
+            let channelModified = false;
+            const originalCmdUrl = channel.cmd;
+            let mainCmdIndex = -1;
 
-                for (let i = 0; i < channel.cmds.length; i++) {
-                    const cmd = channel.cmds[i];
-                    if (cmd.url === originalCmdUrl) {
-                        mainCmdIndex = i;
-                    }
-                    if (cmd.url.includes('localhost')) {
-                        if (resolutionCount < 3) {
-                            await new Promise(resolve => setTimeout(resolve, URL_RESOLUTION_DELAY));
-                            cmd.url = await resolveNewUrl(cmd.url);
-                            channelModified = true;
-                            resolutionCount++;
-                        }
-                    }
-                }
+            for (let i = 0; i < channel.cmds.length; i++) {
+                const cmd = channel.cmds[i];
+                if (cmd.url === originalCmdUrl) mainCmdIndex = i;
 
-                if (channelModified) {
-                    if (mainCmdIndex !== -1) {
-                        channel.cmd = channel.cmds[mainCmdIndex].url;
-                    }
-
-                    const hasLocalhostUrl = channel.cmds.some(c => c.url.includes('localhost'));
-                    if (!hasLocalhostUrl) {
-                        channel.use_http_tmp_link = '0';
-                    }
-                    
-                    await setCachedItem(cacheKey, response);
-                    logger.info(`Updated cache for ${cacheKey} after processing channel ${channel.id}`);
+                if (cmd.url.includes('localhost')) {
+                    await new Promise(resolve => setTimeout(resolve, URL_RESOLUTION_DELAY));
+                    cmd.url = await resolveNewUrl(cmd.url);
+                    channelModified = true;
                 }
             }
+
+            if (channelModified) {
+                if (mainCmdIndex !== -1) channel.cmd = channel.cmds[mainCmdIndex].url;
+
+                const hasLocalhostUrl = channel.cmds.some(c => c.url.includes('localhost'));
+                if (!hasLocalhostUrl) channel.use_http_tmp_link = '0';
+                
+                await setCachedItem(cacheKey, response);
+                logger.info(`Updated cache for ${cacheKey} after processing channel ${channel.id}`);
+            }
+            progress.processed++;
+            progress.lastUpdatedAt = new Date().toISOString();
         }
+        progress.status = 'completed';
     } catch (error) {
         logger.error(`Error during background processing for ${cacheKey}:`, error);
+        progress.status = 'error';
     } finally {
         processingKeys.delete(cacheKey);
+        progress.lastUpdatedAt = new Date().toISOString();
         logger.info(`Finished background processing for ${cacheKey}`);
     }
 };
