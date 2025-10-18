@@ -51,17 +51,20 @@ const resolveNewUrl = async (url: string): Promise<string> => {
         'Accept': '*/*',
         'Connection': 'Keep-Alive',
         'Accept-Encoding': 'gzip',
-        'Referer': 'http://localhost:5000/stalker_portal/c/',
-        'Host': 'localhost:5000',
+        'Referer': `http://${IPTV_PROVIDER_DOMAIN}/stalker_portal/c/`,
+        'Host': `http://${IPTV_PROVIDER_DOMAIN}`,
     };
 
-    let headers: CustomHeaders = { ...defaultHeaders, ...dynamicHeaders };
+    const { Cookie: dynamicCookie, ...otherDynamicHeaders } = dynamicHeaders;
+    let headers: CustomHeaders = { ...defaultHeaders, ...otherDynamicHeaders };
 
-    if (!headers.Cookie) {
+    if (!dynamicCookie) {
         headers.Cookie = 'mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT';
+    } else {
+        headers.Cookie = dynamicCookie;
     }
     
-    const processedHeaders = replaceLocalhost(headers);
+    const processedHeaders = replaceLocalhost(headers as Record<string, string>);
 
     try {
         const startTime = Date.now();
