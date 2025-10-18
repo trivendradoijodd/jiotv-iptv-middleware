@@ -22,6 +22,10 @@ export const updateLastKnownGoodInfo = (token: string, headers: Record<string, a
 
 export const getLatestToken = () => lastToken;
 
+interface CustomHeaders extends Record<string, string> {
+    Cookie?: string;
+}
+
 const replaceLocalhost = (headers: Record<string, string>): Record<string, string> => {
     const newHeaders: Record<string, string> = {};
     for (const key in headers) {
@@ -34,22 +38,32 @@ const resolveNewUrl = async (url: string): Promise<string> => {
     logger.info(`Resolving URL: ${url}`);
 
     const token = lastToken || lastKnownGoodToken;
-    let headers = (Object.keys(lastHandshakeHeaders).length > 0) ? lastHandshakeHeaders : lastKnownGoodHeaders;
+    const dynamicHeaders = (Object.keys(lastHandshakeHeaders).length > 0) ? lastHandshakeHeaders : lastKnownGoodHeaders;
 
     if (!token) {
         logger.warn('Authentication token not available. Skipping URL resolution.');
         return url;
     }
 
-    if (Object.keys(headers).length === 0) {
-        headers = {
-            'Referer': 'http://localhost:5000/stalker_portal/c/',
-            'Host': 'localhost:5000',
-        };
+    const defaultHeaders = {
+        'User-Agent': 'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3',
+        'X-User-Agent': 'Model: MAG250; Link: WiFi',
+        'Accept': '*/*',
+        'Connection': 'Keep-Alive',
+        'Accept-Encoding': 'gzip',
+        'Referer': 'http://localhost:5000/stalker_portal/c/',
+        'Host': 'localhost:5000',
+    };
+
+    let headers: CustomHeaders = { ...defaultHeaders, ...dynamicHeaders };
+
+    if (!headers.Cookie) {
+        headers.Cookie = 'mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT';
     }
+    
+    const processedHeaders = replaceLocalhost(headers);
 
     try {
-        const processedHeaders = replaceLocalhost(headers);
         const startTime = Date.now();
         const handshakeResponse = await axios.get<THandshakeResponse>(
             `${IPTV_PROVIDER_DOMAIN}/stalker_portal/server/load.php`,
@@ -80,7 +94,7 @@ const resolveNewUrl = async (url: string): Promise<string> => {
                     JsHttpRequest: '1-xml',
                 },
                 headers: {
-                    ...lastHandshakeHeaders,
+                    ...processedHeaders,
                     Authorization: `Bearer ${newToken}`,
                 },
             }
@@ -145,10 +159,10 @@ export const processChannelsInBackground = async (cacheKey: string) => {
                     }
                     if (cmd.url.includes('localhost')) {
                         if (resolutionCount < 3) {
+                            await new Promise(resolve => setTimeout(resolve, URL_RESOLUTION_DELAY));
                             cmd.url = await resolveNewUrl(cmd.url);
                             channelModified = true;
                             resolutionCount++;
-                            await new Promise(resolve => setTimeout(resolve, URL_RESOLUTION_DELAY));
                         }
                     }
                 }

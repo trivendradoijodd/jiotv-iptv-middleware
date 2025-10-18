@@ -1,12 +1,11 @@
-2025-10-17T18:37:15.469Z - ERROR - An unexpected error occurred during URL resolution: TypeError: Cannot read properties of undefined (reading 'cmd')
-2025-10-17T18:37:18.160Z - ERROR - {
+2025-10-17T20:17:47.475Z - ERROR - {
   "message": "Error during URL resolution",
   "url": "http://jiotv.be/stalker_portal/server/load.php",
   "method": "get",
   "params": {
     "type": "stb",
     "action": "handshake",
-    "token": "01D632EF9FDDA043A97BA4F4B9385657",
+    "token": "C4BC71D90F755FA9D808F13D00EC2D28",
     "JsHttpRequest": "1-xml"
   },
   "status": 429,
@@ -40,7 +39,7 @@
       "x-user-agent": "Model: MAG250; Link: WiFi",
       "referer": "http://jiotv.be/stalker_portal/c/",
       "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
-      "authorization": "Bearer 01D632EF9FDDA043A97BA4F4B9385657",
+      "authorization": "Bearer C4BC71D90F755FA9D808F13D00EC2D28",
       "host": "jiotv.be",
       "connection": "Keep-Alive",
       "accept-encoding": "gzip"
@@ -48,7 +47,7 @@
     "params": {
       "type": "stb",
       "action": "handshake",
-      "token": "01D632EF9FDDA043A97BA4F4B9385657",
+      "token": "C4BC71D90F755FA9D808F13D00EC2D28",
       "JsHttpRequest": "1-xml"
     },
     "method": "get",
@@ -56,14 +55,14 @@
     "allowAbsoluteUrls": true
   }
 }
-2025-10-17T18:37:20.820Z - ERROR - {
+2025-10-17T20:17:52.171Z - ERROR - {
   "message": "Error during URL resolution",
   "url": "http://jiotv.be/stalker_portal/server/load.php",
   "method": "get",
   "params": {
     "type": "stb",
     "action": "handshake",
-    "token": "01D632EF9FDDA043A97BA4F4B9385657",
+    "token": "C4BC71D90F755FA9D808F13D00EC2D28",
     "JsHttpRequest": "1-xml"
   },
   "status": 429,
@@ -97,7 +96,7 @@
       "x-user-agent": "Model: MAG250; Link: WiFi",
       "referer": "http://jiotv.be/stalker_portal/c/",
       "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
-      "authorization": "Bearer 01D632EF9FDDA043A97BA4F4B9385657",
+      "authorization": "Bearer C4BC71D90F755FA9D808F13D00EC2D28",
       "host": "jiotv.be",
       "connection": "Keep-Alive",
       "accept-encoding": "gzip"
@@ -105,7 +104,463 @@
     "params": {
       "type": "stb",
       "action": "handshake",
-      "token": "01D632EF9FDDA043A97BA4F4B9385657",
+      "token": "C4BC71D90F755FA9D808F13D00EC2D28",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-17T20:17:56.837Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "C4BC71D90F755FA9D808F13D00EC2D28",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer C4BC71D90F755FA9D808F13D00EC2D28",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "C4BC71D90F755FA9D808F13D00EC2D28",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-17T20:19:31.527Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer 70311062501C9DDCDAFDBCB5C8B518D5",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-17T20:19:36.263Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer 70311062501C9DDCDAFDBCB5C8B518D5",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-17T20:20:58.549Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer EE41CAC4C6F71C56FAB5C4C401A4C5CC",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-17T20:21:03.197Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer EE41CAC4C6F71C56FAB5C4C401A4C5CC",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-17T20:21:07.835Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer EE41CAC4C6F71C56FAB5C4C401A4C5CC",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "70311062501C9DDCDAFDBCB5C8B518D5",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-18T15:13:00.248Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "4911A141CF68DFC92B2FE51FAF6CD127",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer 4911A141CF68DFC92B2FE51FAF6CD127",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "4911A141CF68DFC92B2FE51FAF6CD127",
+      "JsHttpRequest": "1-xml"
+    },
+    "method": "get",
+    "url": "http://jiotv.be/stalker_portal/server/load.php",
+    "allowAbsoluteUrls": true
+  }
+}
+2025-10-18T15:13:04.920Z - ERROR - {
+  "message": "Error during URL resolution",
+  "url": "http://jiotv.be/stalker_portal/server/load.php",
+  "method": "get",
+  "params": {
+    "type": "stb",
+    "action": "handshake",
+    "token": "4911A141CF68DFC92B2FE51FAF6CD127",
+    "JsHttpRequest": "1-xml"
+  },
+  "status": 429,
+  "data": "",
+  "config": {
+    "transitional": {
+      "silentJSONParsing": true,
+      "forcedJSONParsing": true,
+      "clarifyTimeoutError": false
+    },
+    "adapter": [
+      "xhr",
+      "http",
+      "fetch"
+    ],
+    "transformRequest": [
+      null
+    ],
+    "transformResponse": [
+      null
+    ],
+    "timeout": 0,
+    "xsrfCookieName": "XSRF-TOKEN",
+    "xsrfHeaderName": "X-XSRF-TOKEN",
+    "maxContentLength": -1,
+    "maxBodyLength": -1,
+    "env": {},
+    "headers": {
+      "Accept": "*/*",
+      "user-agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 250 Safari/533.3",
+      "x-user-agent": "Model: MAG250; Link: WiFi",
+      "referer": "http://jiotv.be/stalker_portal/c/",
+      "cookie": "mac=00:1A:79:00:00:61; stb_lang=en; timezone=GMT",
+      "authorization": "Bearer 4911A141CF68DFC92B2FE51FAF6CD127",
+      "host": "jiotv.be",
+      "connection": "Keep-Alive",
+      "accept-encoding": "gzip"
+    },
+    "params": {
+      "type": "stb",
+      "action": "handshake",
+      "token": "4911A141CF68DFC92B2FE51FAF6CD127",
       "JsHttpRequest": "1-xml"
     },
     "method": "get",

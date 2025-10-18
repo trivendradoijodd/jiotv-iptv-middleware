@@ -13,9 +13,7 @@ const app = express();
 
 const httpLogStream = fs.createWriteStream(path.join(__dirname, '../http.log'), { flags: 'a' });
 app.use(morgan('combined', { stream: httpLogStream }));
-app.use(morgan('dev', {
-    skip: (req, res) => res.statusCode < 400
-}));
+app.use(morgan('dev'));
 
 app.use(express.raw({ type: '*/*', limit: '50mb' }));
 
