@@ -7,7 +7,7 @@ import { initCache, getCacheMetadata } from './lib/cache';
 import { handleRequest } from './lib/requestHandler';
 import logger from './lib/logger';
 import { DEFAULT_CACHE_KEY, PORT } from './config';
-import { processChannelsInBackground, getBackgroundTaskProgress } from './lib/background';
+import { processChannelsInBackground, getBackgroundTaskProgress, loadTokensFromCache } from './lib/background';
 
 const app = express();
 
@@ -65,6 +65,7 @@ app.all(/.*/, (req: Request, res: Response) => {
 const startServer = async () => {
     try {
         await initCache();
+        await loadTokensFromCache();
         app.listen(PORT, () => {
             console.log(`Middleware server is running on http://localhost:${PORT}`);
         });

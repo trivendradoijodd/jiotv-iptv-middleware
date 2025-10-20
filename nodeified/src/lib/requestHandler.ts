@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import axios, { Method } from 'axios';
 import { URLSearchParams } from 'url';
 import { getCachedItem, setCachedItem } from './cache';
-import { processChannelsInBackground, updateHandshakeInfo, getLatestToken, updateLastKnownGoodInfo } from './background';
+import { processChannelsInBackground, updateHandshakeInfo, getRefreshedToken, updateLastKnownGoodInfo, replaceLocalhost, CustomHeaders, generateCurlCommand } from './background';
 import logger from './logger';
 import { IPTV_PROVIDER_DOMAIN } from '../config';
 
@@ -11,8 +11,9 @@ export const handleRequest = async (req: Request, res: Response) => {
     logger.info(`Incoming Request: ${req.method} ${req.originalUrl}`);
     
     const { type, action, cmd, token } = req.query;
+    const isHandshake = type === 'stb' && action === 'handshake';
 
-    if (type === 'stb' && action === 'handshake') {
+    if (isHandshake) {
         if (token && typeof token === 'string') {
             updateHandshakeInfo(token, req.headers as Record<string, any>);
         }
@@ -47,7 +48,6 @@ export const handleRequest = async (req: Request, res: Response) => {
             return;
         }
     }
-    logger.info(`Headers: ${JSON.stringify(req.headers)}`);
     if (req.body && req.body.length > 0) {
         logger.info(`Body: ${req.body.toString('utf-8')}`);
     }
@@ -73,10 +73,13 @@ export const handleRequest = async (req: Request, res: Response) => {
     logger.info(`Forwarding Request to: ${fullTargetUrl}`);
 
     try {
-        const headers = { ...req.headers, host: new URL(IPTV_PROVIDER_DOMAIN).host };
-        const latestToken = getLatestToken();
-        if (latestToken && headers.authorization) {
-            headers.authorization = `Bearer ${latestToken}`;
+        const headers = replaceLocalhost({ ...req.headers, host: (IPTV_PROVIDER_DOMAIN) } as CustomHeaders);
+        
+        if (!isHandshake) {
+            const refreshedToken = await getRefreshedToken();
+            if (refreshedToken && headers.authorization) {
+                headers.authorization = `Bearer ${refreshedToken}`;
+            }
         }
 
         const providerResponse = await axios({
@@ -111,6 +114,12 @@ export const handleRequest = async (req: Request, res: Response) => {
         if (contentType.includes('application/json')) {
             try {
                 const data = JSON.parse(finalContent.toString('utf-8'));
+                
+                if (isHandshake && data.js && data.js.token) {
+                    updateHandshakeInfo(data.js.token, req.headers as Record<string, any>);
+                    logger.info(`Updated token from handshake response: ${data.js.token}`);
+                    updateLastKnownGoodInfo(data.js.token, req.headers as Record<string, any>);
+                }
                 
                 if (isChannelListRequest) {
                     await setCachedItem(cacheKey, data);
@@ -181,6 +190,10 @@ export const handleRequest = async (req: Request, res: Response) => {
         }
         if (axios.isAxiosError(error)) {
             logger.error(`Error connecting to IPTV provider: ${error.message}`);
+            if (error.config) {
+                const { method, url, headers, data } = error.config;
+                logger.error(`Failed request cURL: ${generateCurlCommand(method || 'GET', url || '', headers || {}, data)}`);
+            }
             res.status(502).send(`Error connecting to IPTV provider: ${error.message}`);
         } else if (error instanceof Error) {
             logger.error(`An unexpected error occurred: ${error.message}`);
@@ -192,4 +205,3 @@ export const handleRequest = async (req: Request, res: Response) => {
     }
     logger.info(`--- End Request ---`);
 };
-
